@@ -467,7 +467,10 @@ static void BareboneBtnCback(uint8_t btn)
             break;
 
             case APP_UI_BTN_1_LONG:
-                AppConnClose(connId);
+		{
+			APP_TRACE_INFO0(">>BTN_1_LONG: AppConnClose()<<");
+			AppConnClose(connId);
+		}
             break;
 
             case APP_UI_BTN_2_SHORT:
@@ -483,20 +486,28 @@ static void BareboneBtnCback(uint8_t btn)
         switch (btn)
         {
             case APP_UI_BTN_1_SHORT:
-                /* start or restart advertising */
-                AppAdvStart(APP_MODE_AUTO_INIT);
+		{
+			/* start or restart advertising */
+			AppAdvStart(APP_MODE_AUTO_INIT);
+		}
             break;
 
             case APP_UI_BTN_1_MED:
-                /* enter discoverable and bondable mode mode */
-                AppSetBondable(TRUE);
-                AppAdvStart(APP_MODE_DISCOVERABLE);
+		{
+			/* enter discoverable and bondable mode mode */
+			APP_TRACE_INFO0(">>BTN_1_MED: enter discoverable and bondable mode mode<<");
+			AppSetBondable(TRUE);
+			AppAdvStart(APP_MODE_DISCOVERABLE);
+		}
             break;
 
             case APP_UI_BTN_1_LONG:
-                /* clear bonded device info and restart advertising */
-                AppDbDeleteAllRecords();
-                AppAdvStart(APP_MODE_AUTO_INIT);
+		{
+			/* clear bonded device info and restart advertising */
+			APP_TRACE_INFO0(">>BTN_1_LONG: clear bonded device info and restart advertising<<");
+			AppDbDeleteAllRecords();
+			AppAdvStart(APP_MODE_AUTO_INIT);
+		}
             break;
 
             default:
