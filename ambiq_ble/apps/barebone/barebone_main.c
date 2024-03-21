@@ -604,7 +604,12 @@ static void BareboneProcMsg(wsfMsgHdr_t *pMsg)
         break;
 
         case DM_SEC_PAIR_FAIL_IND:
-            uiEvent = APP_UI_SEC_PAIR_FAIL;
+	 {
+	 	dmConnId_t      connId = AppConnIsOpen();
+		uiEvent = APP_UI_SEC_PAIR_FAIL;
+		AppConnClose(connId);
+		APP_TRACE_INFO0("DM_SEC_PAIR_FAIL_IND: AppConnClose()");
+	 }
         break;
 
         case DM_SEC_ENCRYPT_IND:
