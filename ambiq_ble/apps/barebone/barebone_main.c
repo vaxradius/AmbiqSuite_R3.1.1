@@ -144,7 +144,7 @@ static const appSlaveCfg_t AppSlaveCfg =
 /*! configurable parameters for security */
 static const appSecCfg_t AppSecCfg =
 {
-    0,                                      /*! Authentication and bonding flags */
+    DM_AUTH_BOND_FLAG,                      /*! Authentication and bonding flags */
     0,                                      /*! Initiator key distribution flags */
     DM_KEY_DIST_LTK,                        /*! Responder key distribution flags */
     FALSE,                                  /*! TRUE if Out-of-band pairing data is present */
@@ -575,6 +575,7 @@ static void BareboneProcMsg(wsfMsgHdr_t *pMsg)
 #ifdef TUTORIAL_ADDING_AMOTAS
             amotas_proc_msg(pMsg);
 #endif
+		DmSecSlaveReq((dmConnId_t) (((dmEvt_t *)pMsg)->hdr.param), pAppSecCfg->auth);
         }
         break;
 

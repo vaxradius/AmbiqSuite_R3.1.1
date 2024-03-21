@@ -576,6 +576,8 @@ static void appSlaveResolvedAddrInd(dmEvt_t *pMsg, appConnCb_t *pCb)
 {
   dmSecKey_t *pPeerKey;
 
+  APP_TRACE_INFO0(">>appSlaveResolvedAddrInd<<");
+
   /* if address resolution is not in progress */
   if (!appSlaveCb.inProgress)
   {
@@ -590,6 +592,8 @@ static void appSlaveResolvedAddrInd(dmEvt_t *pMsg, appConnCb_t *pCb)
 #endif
     /* record found */
     pCb->dbHdl = appSlaveCb.dbHdl;
+
+   APP_TRACE_INFO2(">>RPA resolved: pCb->dbHdl=0x%x, appSlaveCb.findLtk=0x%x<<", pCb->dbHdl,appSlaveCb.findLtk);
 
     /* if LTK was requested while resolving master's address */
     if (appSlaveCb.findLtk)
@@ -606,13 +610,16 @@ static void appSlaveResolvedAddrInd(dmEvt_t *pMsg, appConnCb_t *pCb)
     /* get the next database record */
     appSlaveCb.dbHdl = AppDbGetNextRecord(appSlaveCb.dbHdl);
 
+	APP_TRACE_INFO0(">>chek if there's another bond record or not<<");
+
     /* if there's another bond record */
     if ((appSlaveCb.dbHdl != APP_DB_HDL_NONE) &&
         ((pPeerKey = AppDbGetKey(appSlaveCb.dbHdl, DM_KEY_IRK, NULL)) != NULL))
     {
       /* resolve RPA using the next stored IRK */
       DmPrivResolveAddr(DmConnPeerAddr(pCb->connId), pPeerKey->irk.key, pMsg->hdr.param);
-
+	  
+	APP_TRACE_INFO0(">>resolve RPA using the next stored IRK<<");
       /* not done yet */
       return;
     }
@@ -675,13 +682,19 @@ void appSlaveSecConnOpen(dmEvt_t *pMsg, appConnCb_t *pCb)
   pCb->bondByLtk = FALSE;
   pCb->bondByPairing = FALSE;
 
+  APP_TRACE_INFO0(">>appSlaveSecConnOpen<<");
+
   /* find record for peer device */
   pCb->dbHdl = AppDbFindByAddr(pMsg->connOpen.addrType, pMsg->connOpen.peerAddr);
+
+  APP_TRACE_INFO1("find record for peer device: pCb->dbHdl=0x%x", pCb->dbHdl);
+
 
   /* if record not found and the peer device uses an RPA */
   if ((pCb->dbHdl == NULL) && DM_RAND_ADDR_RPA(pMsg->connOpen.peerAddr, pMsg->connOpen.addrType))
   {
     /* resolve master's RPA to see if we already have a bond with this device */
+	APP_TRACE_INFO0("resolve master's RPA to see if we already have a bond with this device");
     appSlaveResolveAddr(pMsg);
   }
 #ifdef AM_BLE_USE_NVM
@@ -735,6 +748,8 @@ static void appSecPairInd(dmEvt_t *pMsg, appConnCb_t *pCb)
   uint8_t iKeyDist;
   uint8_t rKeyDist;
 
+  APP_TRACE_INFO3(">>appSecPairInd: appSlaveCb.bondable=0x%x,  pMsg->pairInd.auth=0x%x, DmConnSecLevel(pCb->connId)=0x%x<<", appSlaveCb.bondable,pMsg->pairInd.auth,DmConnSecLevel(pCb->connId));
+
   /* if in bondable mode or if peer is not requesting bonding
    * or if already bonded with this device and link is encrypted
    */
@@ -748,8 +763,18 @@ static void appSecPairInd(dmEvt_t *pMsg, appConnCb_t *pCb)
     /* if bonding and no device record */
     if (pCb->bondByPairing && pCb->dbHdl == APP_DB_HDL_NONE)
     {
-      /* create a device record if none exists */
-      pCb->dbHdl = AppDbNewRecord(DmConnPeerAddrType(pCb->connId), DmConnPeerAddr(pCb->connId), FALSE);
+		/* Check if there is a stored bond with any device */
+		if (!AppDbCheckBonded())
+		{
+			APP_TRACE_INFO0("create a device record");
+			pCb->dbHdl = AppDbNewRecord(DmConnPeerAddrType(pCb->connId), DmConnPeerAddr(pCb->connId), FALSE);
+		}
+		else
+		{
+			APP_TRACE_INFO0("There is a stored bond with any device");
+			DmSecCancelReq(pCb->connId, SMP_ERR_PAIRING_NOT_SUP);
+			return;
+		}
     }
 
     /* initialize stored keys */
